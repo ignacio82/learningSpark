@@ -1,0 +1,67 @@
+---
+title: "Chapter 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+## The connect-work-disconnect pattern
+
+```{r}
+# Load sparklyr
+library(sparklyr)
+
+# Connect to your Spark cluster
+spark_conn <- spark_connect(master ="spark://192.168.86.31:7077",
+                            spark_home = "/usr/local/spark-2.4.0-bin-hadoop2.7")
+
+# Print the version of Spark
+spark_version(sc = spark_conn)
+# Disconnect from Spark
+spark_disconnect(sc = spark_conn)
+```
+
+## Read sqlite data
+
+```{r eval = false}
+library(DBI)
+con <- dbConnect(drv = RSQLite::SQLite(), 'track_metadata.db')
+dbListTables(con)
+track_metadata <- dbReadTable(con, "songs")
+# Disconnect from the database
+dbDisconnect(con)
+rm(con)
+```
+
+
+## Copying data into Spark
+
+```{r eval = false}
+# Load dplyr
+library(dplyr)
+
+# Explore track_metadata structure
+str(track_metadata)
+
+# Connect to your Spark cluster
+spark_conn <- spark_connect(master ="spark://192.168.86.31:7077",
+                            spark_home = "/usr/local/spark-2.4.0-bin-hadoop2.7")
+
+# Copy iris to Spark
+track_metadata_tbl <- copy_to(spark_conn, iris, overwrite = TRUE)
+
+# Copy track_metadata to Spark
+track_metadata_tbl <- copy_to(spark_conn, track_metadata, overwrite = TRUE) ### This does not work!
+
+# List the data frames available in Spark
+src_tbls(spark_conn)
+
+# Disconnect from Spark
+spark_disconnect(spark_conn)
+```
+
+
+
